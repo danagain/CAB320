@@ -77,6 +77,7 @@ def test_taboo_cells():
     wh = Warehouse()
     wh.extract_locations(puzzle_t3.split(sep='\n'))
     answer = taboo_cells(wh)
+    print(expected_answer_3)
     assert( answer == expected_answer_3 )
 
 

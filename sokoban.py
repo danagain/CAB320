@@ -164,6 +164,7 @@ if __name__ == "__main__":
     wh.read_warehouse_file("./warehouses/warehouse_03.txt")
 #    field.write_warehouse_file("./F_01.txt")
 
+
     print(wh)   # this calls    wh.__str__()
 
 

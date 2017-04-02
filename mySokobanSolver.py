@@ -51,10 +51,12 @@ def taboo_cells(warehouse):
     ##         "INSERT YOUR CODE HERE"
 
 
-    problem_file = "./warehouses/warehouse_203.txt"  ##Load up maps just for testing
-    warehouse.read_warehouse_file(problem_file)
+    #problem_file = "./warehouses/warehouse_03.txt"  ##Load up maps just for testing
+    #warehouse.read_warehouse_file(problem_file)
 
     ######This code is from the Sokoban file to get coords of objects in the warehouse
+
+
     freetile = list()
     X, Y = zip(*warehouse.walls)
     x_size, y_size = 1 + max(X), 1 + max(Y)
@@ -108,14 +110,18 @@ def taboo_cells(warehouse):
                 for i in range(len(tabooTiles) - 2):  # for the length of tabooTiles -1 start one element ahead
                     i_x, i_y = tabooTiles[i + 1]
                     if i_y == j_y and i_x != j_x:  # if y coords equal at some point during both loops
+                        coverwall = None
                         counter = 0  # and the element infront is a hash tag
                         for k in range(j_x, i_x):  # for the range of the x coords of the matching y coords
                             if vis[i_y - 1][k] == "#" or vis[i_y + 1][k] == "#":  # loop across the x range checking it's a wall
                                 counter = counter + 1  # count number of blocks
                                 if counter == abs(j_x - i_x):  # if the counter = the range of the x coords
                                     for p in range(j_x, i_x):  # then loop across marking tabooTiles
-                                        if vis[j_y][p] != ".":
-                                            vis[j_y][p] = "X"
+                                        if vis[j_y][p] == ".":
+                                            coverwall = False
+                        if coverwall == True:
+                            for p2 in range(j_x, i_x):  # then loop across marking tabooTiles
+                                vis[j_y][p2] = "X"
 
 
 
@@ -128,6 +134,7 @@ def taboo_cells(warehouse):
                 i_x, i_y = tabooTiles[i + 1]
                 if i_x + 1 < colx:
                     if i_x == j_x and i_y != j_y:  # if y coords equal at some point during both loops
+                        coverwall = None
                         counter = 0  # and the element infront is a hash tag
                         for k in range(j_y, i_y):  # for the range of the x coords of the matching y coords
                             if (vis[k][i_x - 1] == "#" or vis[k][
@@ -135,13 +142,16 @@ def taboo_cells(warehouse):
                                 counter = counter + 1  # count number of blocks
                                 if counter == abs(j_y - i_y):  # if the counter = the range of the x coords
                                     for p in range(j_y, i_y):  # then loop across marking tabooTiles
-                                        if vis[p][j_x] != ".":
-                                            vis[p][j_x] = "X"
+                                        if vis[p][j_x] == ".":
+                                            coverwall = False
+                                        else: coverwall = True
+                        if coverwall == True:
+                            for p2 in range(j_y, i_y):
+                                vis[p2][j_x] = "X"
     #wall_coords = []
     #for (x, y) in warehouse.walls:
     #   wall_coords.append((x,y))
     #print( wall_coords)
-
 
     ##CLear up "X" outside of map (almost works perfectly except a few maps)
     for y in range(rowy):
@@ -160,9 +170,6 @@ def taboo_cells(warehouse):
         if len(Xdata) >= 1 and len(Wdata) >= 1:
             if min(Xdata) < min(Wdata):
                 vis[y][min(Xdata)] = " "
-
-
-
 
     for (x, y) in warehouse.walls:
         vis[y][x] = "#"
@@ -188,8 +195,20 @@ class SokobanPuzzle(search.Problem):
 
     ##         "INSERT YOUR CODE HERE"
 
-    def __init__(self, warehouse):
-        raise NotImplementedError()
+    def __init__(self,warehouse):
+        self.initial_state = self.LoadProblem(warehouse)
+        self.current_state = self.initial_state
+
+    def LoadProblem(self, filePath):
+        environment = Warehouse()
+        environment.read_warehouse_file(filePath)
+        return environment
+
+    def getState(self, state=None):
+        if state == None:
+            state = self.current_state
+        return state
+
 
     def actions(self, state):
         """
@@ -300,6 +319,9 @@ def solve_sokoban_macro(warehouse):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-wh = Warehouse()
-taboo_cells(wh)
+if __name__ == "__main__":
+    a = SokobanPuzzle("./warehouses/warehouse_03.txt")
+    b = a.getState()
+    taboo_cells(b)
+    #print(b)
+    #taboo_cells(wh)
