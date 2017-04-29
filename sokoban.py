@@ -163,10 +163,16 @@ if __name__ == "__main__":
     wh = Warehouse()
     wh.read_warehouse_file("./warehouses/warehouse_03.txt")
 #    field.write_warehouse_file("./F_01.txt")
-
-
     print(wh)   # this calls    wh.__str__()
-
+    a = wh.walls
+    x,y = a[5]
+    print(a[5])
+    i = 0
+    for wall in wh.walls:
+        print(wall[0])
+    print(wh.targets)
+    b = wh.worker
+    print(b)
 
 # + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + 
 #                              CODE CEMETARY
