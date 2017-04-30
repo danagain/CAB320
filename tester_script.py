@@ -29,6 +29,8 @@ from mySokobanSolver import my_team, taboo_cells, SokobanPuzzle, check_action_se
 from mySokobanSolver import solve_sokoban_elem, can_go_there, solve_sokoban_macro 
 
 
+
+
 puzzle_t1 ='''
 #######
 #@ $. #
@@ -99,7 +101,6 @@ def test_taboo_cells():
     wh = Warehouse()
     wh.extract_locations(puzzle_t3.split(sep='\n'))
     answer = taboo_cells(wh)
-    print(answer)
     if same_multi_line_strings(answer,expected_answer_3):
         print('Test taboo_cells passed\n')
     else:
@@ -119,7 +120,7 @@ def test_check_elem_action_seq():
         print('Test check_elem_action_seq passed\n')
     else:
         print('** Test check_elem_action_seq failed\n')
-
+        
 
 def test_solve_sokoban_elem():
 #    problem_file = "./warehouses/warehouse_01.txt"
@@ -154,7 +155,7 @@ def test_solve_sokoban_macro():
     print(wh)
     answer = solve_sokoban_macro(wh)
     print(answer)
-    #assert( answer ==  [ ((2,3),'Right'), ((2,4),'Right'), ((3,3),'Left') , ((3,2),'Left') ] )
+    assert( answer ==  [ ((2,3),'Right'), ((2,4),'Right'), ((3,3),'Left') , ((3,2),'Left') ] )
 #    print(wh.worker) # x,y  coords !!
 #    print(wh.boxes)  # x,y  coords !!
 

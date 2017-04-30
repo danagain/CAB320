@@ -14,6 +14,7 @@ from search import breadth_first_graph_search
 import itertools
 import operator
 from sokoban import Warehouse
+import time
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -147,17 +148,18 @@ class SokobanPuzzle(search.Problem):
 
     def h(self, node):
         state = list(node.state)
-        del state[0]
         m_dist = 0
         distances = []
-        for i in range(len(state) - 1):
+        state = state[1]
+        for i in range(len(state)-1):
             if state[i] not in self.warehouse.targets:
                 for j in range(len(self.warehouse.targets) - 1):
                     box_x, box_y = state[i]
                     target_x, target_y = self.warehouse.targets[j]
                     m_dist = abs(target_x - box_x) + abs(target_y - box_y)
                     distances.append(m_dist)
-            m_dist = m_dist + min(distances)
+                m_dist += min(distances)
+        print(m_dist)
         return m_dist
 
     def path_cost(self, c, state1, action, state2):
@@ -360,40 +362,34 @@ def solve_sokoban_macro(warehouse):
     elem_sol = solve_sokoban_elem(warehouse)  # Solve the warehouse, boxes and worker locations change
     if elem_sol == "Impossible":  # Check if solution was not possible
         return elem_sol
-    move = ["Up", "Down", "Left", "Right"]
     for action in elem_sol:  # For all the actions in the solution
         boxes = macro_wh.boxes  # boxes = original box locations
         worker = macro_wh.worker
-        for direction in move:  # for all the directions
-            if direction == action: # if it matches the action performed
-                if direction == "Up":
-                    worker = (macro_wh.worker[0],macro_wh.worker[1]-1)  # update workers location
-                    for i, box in enumerate(boxes):  # loop the boxes
-                        if worker == box:  # if worker matches the box location
-                            boxes[i] = (box[0], box[1]-1)  # update the box location
-                            M.append((worker[1],worker[0], direction))  # add to the list the new worker (row,col) and the direction
-
-                if direction == "Down":
-                    worker = (macro_wh.worker[0],macro_wh.worker[1]+1)
-                    for i, box in enumerate(boxes):
-                        if worker == box:
-                            boxes[i] = (box[0], box[1]+1)
-                            M.append((worker[1],worker[0], direction))
-
-                if direction == "Left":
-                    worker = (macro_wh.worker[0]-1,macro_wh.worker[1])
-                    for i,box in enumerate(boxes):
-                        if worker == box:
-                            boxes[i] = (box[0]-1, box[1])
-                            M.append((worker[1],worker[0], direction))
-
-                if direction == "Right":
-                    worker = (macro_wh.worker[0]+1,macro_wh.worker[1])
-                    for i,box in enumerate(boxes):
-                        if worker == box:
-                            boxes[i] = (box[0]+1, box[1])
-                            M.append((worker[1],worker[0], direction))
-            macro_wh = macro_wh.copy(worker, boxes) # for each action save the updated state of the worker and boxes to the copied warehouse
+        if action == "Up":
+            worker = (macro_wh.worker[0],macro_wh.worker[1]-1)  # update workers location
+            for i, box in enumerate(boxes):  # loop the boxes
+                if worker == box:  # if worker matches the box location
+                     boxes[i] = (box[0], box[1]-1)  # update the box location
+                     M.append(((worker[1],worker[0]), "Up"))  # add to the list the new worker (row,col) and the direction
+        if action == "Down":
+             worker = (macro_wh.worker[0],macro_wh.worker[1]+1)
+             for i, box in enumerate(boxes):
+                if worker == box:
+                    boxes[i] = (box[0], box[1]+1)
+                    M.append(((worker[1],worker[0]), "Down"))
+        if action == "Left":
+            worker = (macro_wh.worker[0]-1,macro_wh.worker[1])
+            for i,box in enumerate(boxes):
+                if worker == box:
+                    boxes[i] = (box[0]-1, box[1])
+                    M.append(((worker[1],worker[0]), "Left"))
+        if action == "Right":
+             worker = (macro_wh.worker[0]+1,macro_wh.worker[1])
+             for i,box in enumerate(boxes):
+                if worker == box:
+                     boxes[i] = (box[0]+1, box[1])
+                     M.append(((worker[1],worker[0]), "Right"))
+        macro_wh = macro_wh.copy(worker, boxes) # for each action save the updated state of the worker and boxes to the copied warehouse
     return M
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -554,13 +550,15 @@ multiple warehouses  -- not working at the moment
 if __name__ == "__main__":
     print("main")
     wh = Warehouse()
-    wh.read_warehouse_file("./warehouses/warehouse_105.txt")
-    print("taboos")
+    wh.read_warehouse_file("./warehouses/warehouse_205.txt")
     print(taboo_cells(wh))
     puz = wh.copy(wh.worker,wh.boxes)
     string = puz.__str__()
     wh.extract_locations(string.split(sep='\n'))
+    start = time.time()
     ans = solve_sokoban_elem(wh)
+    end = time.time()
+    print("Execution Time: ", (end-start))
     print(ans)
 
 
