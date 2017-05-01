@@ -24,12 +24,7 @@ def my_team():
     of triplet of the form (student_number, first_name, last_name)
 
     '''
-    return [ (9448551, 'Daniel', 'Huffer'), (1234568, 'Grace', 'Hopper'), (1234569, 'Eva', 'Tardos') ]
-
-
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
+    return [ (9448551, 'Daniel', 'Huffer'), (7386044, 'Jenyfer', 'Florentina'), (9469184, 'Mitchell', 'Hurst') ]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -52,8 +47,6 @@ def taboo_cells(warehouse):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.
     '''
-    ##         "INSERT YOUR CODE HERE"
-
     freetile = list() #making a list to store the coordinates of tiles with nothing on them
     X, Y = zip(*warehouse.walls) #finding all the coordinates of the walls
     x_size, y_size = 1 + max(X), 1 + max(Y)
@@ -70,47 +63,53 @@ def taboo_cells(warehouse):
         for y in range(rowy):
             if vis[y][x] != "#" or vis[y][x] != ".":
                 freetile.append((x, y))
-    # Take all the corner tiles ( Takes blank spots outside the map needs to be resolved)
-    corner_taboos(freetile, warehouse, taboo_tiles, vis)
+    corner_taboos(freetile, warehouse, taboo_tiles, vis)  # Apply all corner taboos
     for i in range(len(taboo_tiles) - 1):
         t_x, t_y = taboo_tiles[i]
         if vis[t_y][t_x] != ".":
             vis[t_y][t_x] = "X"
-    taboo_walls(taboo_tiles, vis , colx)
-    stringFormat = clear_outter_taboos(rowy, colx, vis, warehouse)
+    taboo_walls(taboo_tiles, vis , colx)  # Apply all wall taboos
+    stringFormat = clear_outter_taboos(rowy, colx, vis, warehouse)  #  clean up warehouse
     return stringFormat
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
 class SokobanPuzzle(search.Problem):
-
-
     '''
     Class to represent a Sokoban puzzle.
-    Your implementation should be compatible with the
-    search functions of the provided module 'search.py'.
-
-    	Use the sliding puzzle and the pancake puzzle for inspiration!
-
+    Compatible with the search functions located in the
+    'search.py' module
     '''
 
     def __init__(self, warehouse):
+        """
+        Class constructor for initialisation
+        @param state: Warehouse object
+        """
         self.warehouse = warehouse # assign the warehouse string to instance var warehouse
         self.initial = (warehouse.worker,tuple(warehouse.boxes)) # init state is dbl tuple of worker and boxes
         self.taboos = taboo_coordinates(warehouse) # load up all taboo coordinates to instance variable taboos
 
-    """
-    goal_test is checking all the target coordinates match the set of box coordinates
-    """
     def goal_test(self, state):
+        """
+        Determines if the current warehouse problem is in a goal state
+        @param state: Current state of the warehouse
+
+        @return
+        True if all unique box coordinates match unique target coordinates
+        Else, False
+        """
         return set(self.warehouse.targets) == set(state[1])  # all boxes match target locations
 
     def actions(self, state):
         """
-        Return the list of actions that can be executed in the given state
-        if these actions do not push a box in a taboo cell.
-        The actions must belong to the list ['Left', 'Down', 'Right', 'Up']
+        Determines a list of viable worker actions based on current warehouse state
+
+        @param state: Current state of the warehouse
+
+        @return
+        List of possible actions from current position e.g  ["Up", "Left"]
         """
         worker = state[0]
         boxes = state[1]
@@ -134,12 +133,28 @@ class SokobanPuzzle(search.Problem):
         return valid_move
 
     def print_solution(self, goal_node):
+        """
+        Print the sequence of actions resulting in the goal state
+        if goal state was found.
+        @param goal_node: The final node popped off the frontier in the search
+        algorithm
+
+        @return
+        A string list of each action leading to the goal state
+        """
         if goal_node is not None:
             path = goal_node.path()
             print(self.goal_path(path))
             return self.goal_path(path)
 
     def goal_path(self, path):
+        """
+        Appends the action for each node visited in a solved problem
+        @param path: A list of nodes leading to goal state
+
+        @return
+        A list of actions performed to reach each new node
+        """
         actions = []
         for node in path:
             if node.action is not None:
@@ -147,6 +162,15 @@ class SokobanPuzzle(search.Problem):
         return actions
 
     def h(self, node):
+        """
+        Determines a heuristic value based on the current
+        state
+        @param node: The current node in the search tree
+
+        @return
+        A heuristic value calculation based on a summation of
+         manhattan distances for each box to it's closest target space
+        """
         state = list(node.state)
         m_dist = 0
         distances = []
@@ -159,7 +183,6 @@ class SokobanPuzzle(search.Problem):
                     m_dist = abs(target_x - box_x) + abs(target_y - box_y)
                     distances.append(m_dist)
                 m_dist += min(distances)
-        print(m_dist)
         return m_dist
 
     def path_cost(self, c, state1, action, state2):
@@ -170,14 +193,16 @@ class SokobanPuzzle(search.Problem):
         and action. The default method costs 1 for every step in the path."""
         return c + 1
 
-    # Results of the action
     def result(self, state, action):
         """
-        Return theh state that results from executing the given
-        action in the given state. The action must be one of
-        self.actions(state).
+        Updates the state of a box and the worker based on the list
+        of possible actions.
+        @param state: The current state of the warehouse (worker and box locations)
+        @param action: List of actions returned by the function actions
+
+        @return
+        An updated warehouse state after box and player have been moved
         """
-        #assert action in self.actions(state)
         worker = state[0]
         boxes = state[1]
         box_list = list(boxes)
@@ -191,23 +216,22 @@ class SokobanPuzzle(search.Problem):
                 worker = (worker[0]-1, worker[1])
             elif direction == "Right":
                 worker = (worker[0]+1, worker[1])
-            #  Player should move and if he moves into a box the box then needs to move a square in the same direction
+        #  Player should move and if he moves into a box, the box then needs to move a square in the same direction
             for box in boxes:
-                b = box
+                b = box  # temporary variable to hold box coordinates
                 if b == worker:
                     if direction == "Up":
                         b = (b[0] , b[1]-1)
-                    if direction == "Down":
+                    elif direction == "Down":
                         b = (b[0], b[1]+1)
-                    if direction == "Left":
+                    elif direction == "Left":
                         b = (b[0]-1, b[1])
-                    if direction == "Right":
+                    elif direction == "Right":
                         b = (b[0]+1, b[1])
-                            # move the box assign to a temp variable
                     box_list.remove(box)  # remove the current location of the box
                     box_list.append(b)   # add the location of the new box position
-            continue  #  break the loop as the box is moved
-        return worker,tuple(box_list)
+            continue  #  break the loop as the box and/or player has been moved
+        return worker,tuple(box_list)  #  updated state
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -257,14 +281,6 @@ def check_action_seq(warehouse, action_seq):
     return string_warehouse.__str__()
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def test(warehouse):
-    test = warehouse.copy(warehouse.worker,warehouse.walls)
-    puzzle = SokobanPuzzle(test)
-    sol = breadth_first_graph_search(puzzle)
-    print(sol)
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 def solve_sokoban_elem(warehouse):
     '''
     This function should solve using elementary actions
@@ -284,25 +300,18 @@ def solve_sokoban_elem(warehouse):
     if puzzle.goal_test(state):
         return []
     #sol_ts = search.breadth_first_tree_search(puzzle)
-    #sol_ts = search.breadth_first_graph_search(puzzle)
+    sol_ts = search.breadth_first_graph_search(puzzle)
     #sol_ts = search.iterative_deepening_search(puzzle)
     #sol_ts = search.depth_first_graph_search(puzzle)
-    sol_ts = search.astar_graph_search(puzzle, lambda n: puzzle.h(n))
+    #sol_ts = search.astar_graph_search(puzzle)
     if sol_ts == None:
         return ['Impossible']
     else:
         ans = puzzle.print_solution(sol_ts)
         return ans
 
-
-    #
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-"""
-Logic:
-Sif the worker is on the y axis
-for the range of the movement to the destination in the y axis, if the x axis meets a box
-then return false, likewise for moving in the x direction return false if box is on same y coordinate
-"""
+
 def can_go_there(warehouse, dst):
     '''
     Determine whether the worker can walk to the cell dst=(row,col)
@@ -313,17 +322,20 @@ def can_go_there(warehouse, dst):
     @return
       True if the worker can walk to cell dst=(row,col) without pushing any box
       False otherwise
-    '''
 
+    Logic:
+    if the worker is on the y axis
+    for the range of the movement to the destination in the y axis, if the x axis meets a box
+    then return false, likewise for moving in the x direction return false if box is on same y coordinate
+    '''
     X, Y = zip(*warehouse.walls)
     x_size, y_size = 1 + max(X), 1 + max(Y)
     x_movement = []
-    for x in range(warehouse.worker[0],dst[0]):
+    for x in range(warehouse.worker[0],dst[0]):  # for the range of the worker to the destination in x axis
         x_movement.append(x)
     y_movement = []
-    for y in range(warehouse.worker[1], dst[1]):
+    for y in range(warehouse.worker[1], dst[1]):  # for the range of the worker to the destination in y axis
         y_movement.append(y)
-
     for b in warehouse.boxes: # Check every box
         if b[0] in x_movement and b[1] == warehouse.worker[1]: # If the box has the same x as the box, check y matches
             return False
@@ -356,7 +368,6 @@ def solve_sokoban_macro(warehouse):
         Otherwise return M a sequence of macro actions that solves the puzzle.
         If the puzzle is already in a goal state, simply return []
     '''
-
     M = []  # List for macro actions
     macro_wh = warehouse.copy()  #  Copy the warehouse in the original layout
     elem_sol = solve_sokoban_elem(warehouse)  # Solve the warehouse, boxes and worker locations change
@@ -389,43 +400,46 @@ def solve_sokoban_macro(warehouse):
                 if worker == box:
                      boxes[i] = (box[0]+1, box[1])
                      M.append(((worker[1],worker[0]), "Right"))
-        macro_wh = macro_wh.copy(worker, boxes) # for each action save the updated state of the worker and boxes to the copied warehouse
+        # for each action save the updated state of the worker and boxes to the copied warehouse
+        macro_wh = macro_wh.copy(worker, boxes)
     return M
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-"""
-This function uses the itertools to find two matching y coordinates with taboo tiles
-If there x values vary and there is no target points between them it will fill across the wall with taboo tiles
-same process is repeated for matching x coordinates
-"""
 def taboo_walls(taboo_tiles, vis, colx):
+    """
+    This function uses the itertools to find two matching y or x coordinates within
+    the list of corner taboos. If a match is found the appropriate helper function is called
+    for a match in the y axis check_top_bot_walls() is called where the matching y values will be evaluated
+    and determined if the wall is a taboo wall. This logic applies to matching x values and the check_side_walls()
+    helper function.
+
+    @param taboo_tiles: A list of all corner taboos
+    @param vis: two dimensional array of the warehouse object
+    @param colx: the length of the warehouse in the x axis
+    """
     def check_top_bot_walls():
             wall_t = 0
             wall_b = 0
-            for x in range(x1+1, x2):
-                if vis[y1-1][x] == "#" and vis[y1][x] != ".":
-                    wall_t += 1
+            for x in range(x1+1, x2):  # for the x coordinates accompanying the matching y coordinates
+                if vis[y1-1][x] == "#" and vis[y1][x] != ".":  # if there is wall and no targets
+                    wall_t += 1  #  increase wall counter
                 if vis[y1+1][x] == "#" and vis[y1][x] != ".":
                     wall_b += 1
-                if wall_t == abs(x2 - (x1+1)):
+                if wall_t == abs(x2 - (x1+1)):  # if the wall counter matches the difference in x coordinates
                         for wall in range((x1+1), x2):
-                            vis[y1][wall] = "X"
+                            vis[y1][wall] = "X"  # then wall is taboo, update vis array
                 if wall_b == abs(x2 - (x1+1)):
                         for w in range((x1+1), x2):
                             vis[y1][w] = "X"
-    """
-    The side walls is the same deal with bot and top walls function above, when it finds two matching x coordinates
-    it will tile the wall with taboos if the y points vary and there is a confirmed wall
-    """
     def check_side_walls():
         wall_l = 0
         wall_r = 0
-        for y in range(y1+1, y2):
-            if vis[y][x1 - 1] == "#" and vis[y][x1] != ".":
-                wall_l += 1
-            if wall_l == abs(y2 - (y1+1)):
+        for y in range(y1+1, y2):  # for the y coordinates accompanying the matching x coordinates
+            if vis[y][x1 - 1] == "#" and vis[y][x1] != ".":  # if there is a wall and no targets
+                wall_l += 1  # increase wall counter
+            if wall_l == abs(y2 - (y1+1)):  # if wall counter matches the difference in the y direction
                 for w in range((y1 + 1), y2):
-                   vis[w][x1] = "X"
+                   vis[w][x1] = "X"  # update vis
             if x1 + 1 < colx:
                 if vis[y][x1 + 1] == "#" and vis[y][x1] != ".":
                     wall_r += 1
@@ -433,22 +447,28 @@ def taboo_walls(taboo_tiles, vis, colx):
                     for w in range((y1+1), y2):
                         vis[w][x1] = "X"
     for t1, t2 in itertools.permutations(taboo_tiles, 2):
-        x1,y1 = t1
-        x2,y2 = t2
-        if y1 == y2:
+        x1,y1 = t1  # x and y for taboo corner one
+        x2,y2 = t2  # x and y for taboo corner two
+        if y1 == y2:  # if y1 and y2 match then call helper function
             check_top_bot_walls()
-        if x1 == x2:
+        if x1 == x2:  # if x1 and x2 match then call helper function
             check_side_walls()
-"""
-This function checks every empty space looking to see if there is a corner (imagine standing staring into a right angle)
-"""
+
 def corner_taboos(freetile, warehouse, taboo_tiles, vis):
+    """
+    Finds and marks all the corners within the warehouse with taboo cells
+    @param freetile: List of free tiles on the warehouse object
+    @param warehouse: A warehouse object
+    @param taboo_tiles: List to hold the taboo tiles found
+    @param vis: Two dimensional array of the warehouse
+    """
     for tiles in freetile: #Check every single free tile against every possible angle a wall could be
         tile_x, tile_y = tiles  # assign coords to all the blank tiles
         up_x, up_y = tile_x, tile_y - 1  # set up up facing position
         down_x, down_y = tile_x, tile_y + 1  # down ..
         right_x, right_y = tile_x + 1, tile_y  # right..
         left_x, left_y = tile_x - 1, tile_y  # left..
+        #  if the worker is facing a corner then append appropriate tile
         if ((up_x, up_y) in warehouse.walls and (right_x, right_y) in warehouse.walls) and vis[tile_y][tile_x] != "." \
                 or ((down_x, down_y) in warehouse.walls and (right_x, right_y) in warehouse.walls) \
                 and vis[tile_y][tile_x] != "." or ((down_x, down_y) in warehouse.walls and (left_x, left_y) in\
@@ -456,12 +476,17 @@ def corner_taboos(freetile, warehouse, taboo_tiles, vis):
                 (left_x, left_y) in warehouse.walls) and vis[tile_y][tile_x] != ".":
             taboo_tiles.append(tiles)
 
-"""
-## This function doesnt remove all the outter taboos, it is impossible to do so
-# without finding all the free tiles strictly inside the walls first through a breadth first search or something first
-"""
+
 def clear_outter_taboos(rowy, colx, vis, warehouse):
-    # Clear up "X" outside of map (almost works perfectly except a few maps)
+    """
+    Attempts to clean up taboo cells that are marked outside the warehouse bounds,
+    doesn't work perfectly on all warehouse maps.
+
+    @param warehouse: A warehouse object
+    @param rowy: Number of rows in the warehouse object
+    @param colx: Number of columns in the warehouse object
+    @param vis: Two dimensional array of the warehouse
+    """
     for y in range(rowy):
         Xdata = []
         Wdata = []
@@ -485,13 +510,16 @@ def clear_outter_taboos(rowy, colx, vis, warehouse):
     stringWarehouse = "\n".join(["".join(line) for line in vis])
     return stringWarehouse
 
-
-
-"""
-# This function is basically the same as the taboo_cells except it returns the coordinates
-# of all the taboo cells instead of a multi-line string
-"""
 def taboo_coordinates(warehouse):
+    """
+    This function is basically the same as the taboo_cells except it returns the coordinates
+    of all the taboo cells instead of a multi-line string
+
+    @param warehouse: A warehouse object
+
+    @:return
+    A list of taboo cell coordinates
+    """
     freetile = list()  # making a list to store the coordinates of tiles with nothing on them
     X, Y = zip(*warehouse.walls)  # finding all the coordinates of the walls
     x_size, y_size = 1 + max(X), 1 + max(Y)
@@ -536,21 +564,12 @@ def move_box_func(a,b):
     new = tuple(map(operator.add, a, b))
     return new
 
-
-"""
-Try and find a way to test the search algorithm on
-multiple warehouses  -- not working at the moment
-"""
-
-
-
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if __name__ == "__main__":
     print("main")
     wh = Warehouse()
-    wh.read_warehouse_file("./warehouses/warehouse_205.txt")
+    wh.read_warehouse_file("./warehouses/warehouse_57.txt")
     print(taboo_cells(wh))
     puz = wh.copy(wh.worker,wh.boxes)
     string = puz.__str__()
